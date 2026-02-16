@@ -56,23 +56,29 @@ export class Contract extends Promise {
 
         return new Contract((resolve) => {
             super.then(
-                async (result) => {
-                    try {
-                        const nextValue = onFulfilled ? await onFulfilled(result) : result;
-                        const finalResult = nextValue instanceof Result ? nextValue : Result.Ok(nextValue);
-                        resolve(finalResult);
-                    } catch (err) {
-                        resolve(Result.Err(err));
-                    }
+                (result) => {
+                    // We wrap the callback in a Promise to safely capture any throws
+                    // into a Result.Err, ensuring no exceptions escape the monad.
+                    Promise.resolve()
+                        .then(() => (onFulfilled ? onFulfilled(result) : result))
+                        .then(
+                            (nextValue) => {
+                                const finalResult = nextValue instanceof Result ? nextValue : Result.Ok(nextValue);
+                                resolve(finalResult);
+                            },
+                            (err) => resolve(Result.Err(err))
+                        );
                 },
-                async (err) => {
-                    try {
-                        const nextValue = onRejected ? await onRejected(err) : Result.Err(err);
-                        const finalResult = nextValue instanceof Result ? nextValue : Result.Ok(nextValue);
-                        resolve(finalResult);
-                    } catch (e) {
-                        resolve(Result.Err(e));
-                    }
+                (err) => {
+                    Promise.resolve()
+                        .then(() => (onRejected ? onRejected(err) : Result.Err(err)))
+                        .then(
+                            (nextValue) => {
+                                const finalResult = nextValue instanceof Result ? nextValue : Result.Ok(nextValue);
+                                resolve(finalResult);
+                            },
+                            (e) => resolve(Result.Err(e))
+                        );
                 }
             );
         }, timeoutMs);

@@ -40,29 +40,27 @@ export class Contract extends Promise {
     get [Symbol.toStringTag]() {
         return 'Contract';
     }
-}
 
-
-/**
- * Wraps an async function to return a Contract.
- * @param {Function} asyncFn 
- * @param {number} timeoutMs 
- * @returns {Function}
- */
-export function wrap(asyncFn, timeoutMs) {
-    return (...args) => {
-        return new Contract((resolve) => {
-            Promise.resolve()
-                .then(() => asyncFn(...args))
-                .then((value) => {
-                    const result = value instanceof Result ? value : Result.Ok(value);
-                    resolve(result);
-                })
-                .catch((err) => {
-                    resolve(Result.Err(err));
-                });
-        }, timeoutMs);
-
-    };
+    /**
+     * Wraps an async function to return a Contract.
+     * @param {Function} asyncFn 
+     * @param {number} timeoutMs 
+     * @returns {Function}
+     */
+    static wrap(asyncFn, timeoutMs) {
+        return (...args) => {
+            return new Contract((resolve) => {
+                Promise.resolve()
+                    .then(() => asyncFn(...args))
+                    .then((value) => {
+                        const result = value instanceof Result ? value : Result.Ok(value);
+                        resolve(result);
+                    })
+                    .catch((err) => {
+                        resolve(Result.Err(err));
+                    });
+            }, timeoutMs);
+        };
+    }
 }
 

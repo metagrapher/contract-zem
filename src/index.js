@@ -52,7 +52,8 @@ export class Contract extends Promise {
 export function wrap(asyncFn, timeoutMs) {
     return (...args) => {
         return new Contract((resolve) => {
-            asyncFn(...args)
+            Promise.resolve()
+                .then(() => asyncFn(...args))
                 .then((value) => {
                     const result = value instanceof Result ? value : Result.Ok(value);
                     resolve(result);

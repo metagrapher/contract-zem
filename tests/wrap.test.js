@@ -52,6 +52,13 @@ async function testWrapComprehensive() {
     const res4 = await wrappedMulti(10, 32);
     if (res4.value !== 42) return Result.Err("Arguments not passed correctly");
 
+    // 5. Synchronous function support
+    const syncFn = (x) => x * 2;
+    const wrappedSync = wrap(syncFn, 100);
+    const res5 = await wrappedSync(21);
+    if (res5.isErr()) return Result.Err(`Expect Ok for sync fn, got Err: ${res5.error}`);
+    if (res5.value !== 42) return Result.Err("Sync function value mismatch");
+
     return Result.Ok("All wrap scenarios passed");
 }
 

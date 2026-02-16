@@ -9,22 +9,14 @@ const DEFAULT_TIMEOUT = 5000;
 export class Contract extends Promise {
     /**
      * @param {Function} executor - (resolve, reject) => void
-     * @param {number|Date} timeoutOrDeadline - expiration time or specific deadline
+     * @param {number} [timeoutMs] - expiration time in milliseconds
      */
-    constructor(executor, timeoutOrDeadline) {
-        let deadline;
-        if (timeoutOrDeadline instanceof Date) {
-            deadline = timeoutOrDeadline;
-        } else {
-            deadline = new Date(Date.now() + (timeoutOrDeadline ?? DEFAULT_TIMEOUT));
-        }
-
+    constructor(executor, timeoutMs) {
         let timeoutId;
 
         // We wrap the executor to handle the timeout logic
         const wrappedExecutor = (resolve, reject) => {
-            const now = Date.now();
-            const delay = Math.max(0, deadline.getTime() - now);
+            const delay = timeoutMs ?? DEFAULT_TIMEOUT;
 
             // Setup the timeout
             timeoutId = setTimeout(() => {
@@ -46,7 +38,6 @@ export class Contract extends Promise {
         };
 
         super(wrappedExecutor);
-        this.deadline = deadline;
     }
 
     get [Symbol.toStringTag]() {
@@ -54,9 +45,15 @@ export class Contract extends Promise {
     }
 
     /**
-     * Chains a decoration to the contract, propagating the same deadline.
+     * Chains a decoration to the contract with a fresh timeout.
      */
     then(onFulfilled, onRejected, timeoutMs) {
+        // Handle (onFulfilled, timeoutMs) signature
+        if (typeof onRejected === 'number' && timeoutMs === undefined) {
+            timeoutMs = onRejected;
+            onRejected = null;
+        }
+
         return new Contract((resolve) => {
             super.then(
                 async (result) => {
@@ -78,7 +75,7 @@ export class Contract extends Promise {
                     }
                 }
             );
-        }, timeoutMs ?? this.deadline);
+        }, timeoutMs);
     }
 
     /**

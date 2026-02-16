@@ -1,0 +1,10 @@
+{
+  "name": "contract-zem",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Timed Promises for ZEM",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node tests/contract.test.js"
+  }
+}
